@@ -327,18 +327,19 @@ def update(dt):
             e.update(dt)
 
         if hero and crystal:
-            if hero.rect.colliderect(crystal.rect):
-                score += 1
-                play_sound('collect')
-                crystal.respawn()
+            if hero and crystal:
+                if hero.actor._rect.colliderect(crystal.actor._rect):  # ALTERADO AQUI
+                    score += 1
+                    play_sound('collect')
+                    crystal.respawn()
 
-        if hero:
-            for guard in enemies:
-                if hero.rect.colliderect(guard.rect):
-                    play_sound('game_over_sfx')
-                    stop_background_music()
-                    game_state = 'game_over'
-                    break
+            if hero:
+                for guard in enemies:
+                    if hero.actor._rect.colliderect(guard.actor._rect):  # ALTERADO AQUI
+                        play_sound('game_over_sfx')
+                        stop_background_music()
+                        game_state = 'game_over'
+                        break
 
     elif game_state == 'game_over':
         if keyboard.space:
