@@ -3,6 +3,15 @@ import sys
 import random
 from pygame import Rect
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pgzero.builtins import Actor, keyboard, sounds, music, screen, mouse
+
+    def draw(): pass
+
+    def update(dt): pass
+
 WIDTH = 800
 HEIGHT = 600
 TITLE = "Coletor Minimalista"
@@ -39,12 +48,10 @@ start_btn = Rect(c_x - btn_w // 2, s_y - btn_h - btn_s // 2, btn_w, btn_h)
 music_btn = Rect(c_x - btn_w // 2, s_y, btn_w, btn_h)
 exit_btn = Rect(c_x - btn_w // 2, s_y + btn_h + btn_s // 2, btn_w, btn_h)
 
-
 class AnimActor:
     def __init__(self, pos, anims, anim_speed=DEFAULT_ANIM_SPEED):
         self.anims = {k: v for k, v in anims.items() if v}
         if not self.anims:
-            print("Aviso: Nenhuma animação válida fornecida. Usando 'default_image'.")
             self.anims = {'active': ['default_image']}
             self.current_anim_state = 'active'
         else:
@@ -57,7 +64,6 @@ class AnimActor:
         self.a_speed = anim_speed
 
         if self.current_anim_state not in self.anims or not self.anims[self.current_anim_state]:
-            print(f"Estado de animação '{self.current_anim_state}' inválido ou vazio. Usando fallback.")
             valid_fallback_state = None
             for state_name, frames in self.anims.items():
                 if frames:
@@ -74,7 +80,6 @@ class AnimActor:
         try:
             self.actor = Actor(self.img, pos)
         except Exception as e:
-            print(f"Erro ao carregar imagem inicial {self.img}: {e}. Usando 'default_image'.")
             try:
                 self.actor = Actor('default_image', pos)
             except Exception as e_fallback:
@@ -93,7 +98,6 @@ class AnimActor:
             try:
                 self.actor.image = img_name
             except Exception as e:
-                print(f"Erro ao carregar frame {img_name}: {e}. Usando 'default_image'.")
                 self.actor.image = 'default_image'
 
     def set_anim_state(self, new_state_name):
@@ -105,7 +109,6 @@ class AnimActor:
             try:
                 self.actor.image = img_name
             except Exception as e:
-                print(f"Erro ao definir imagem do estado {img_name}: {e}. Usando 'default_image'.")
                 self.actor.image = 'default_image'
 
     def draw(self):
@@ -130,7 +133,6 @@ class AnimActor:
     @property
     def rect(self):
         return self.actor.rect
-
 
 class Hero(AnimActor):
     def __init__(self, pos):
@@ -161,7 +163,6 @@ class Hero(AnimActor):
 
         self.update_anim(dt)
 
-
 class Enemy(AnimActor):
     def __init__(self, pos, patrol_limit_y, patrol_bounds_x):
         anims = {
@@ -172,7 +173,8 @@ class Enemy(AnimActor):
         self.patrol_bounds_x = patrol_bounds_x
         self.vx = ENEMY_SPEED if random.choice([True, False]) else -ENEMY_SPEED
 
-    def update(self, dt, hero_actor=None):
+    def update(self, dt,
+               hero_actor=None):
         self.x += self.vx * dt
 
         if self.vx > 0 and self.actor.right >= self.patrol_bounds_x[1]:
@@ -184,7 +186,6 @@ class Enemy(AnimActor):
 
         self.update_anim(dt)
         return True
-
 
 class Crystal(AnimActor):
     def __init__(self, pos):
@@ -201,24 +202,22 @@ class Crystal(AnimActor):
         self.actor.x = random.randint(margin, WIDTH - margin)
         self.actor.y = random.randint(margin, HEIGHT - margin)
 
-
-def play_sound(name_param):
+def play_sound(sound_name):
     global music_on
     if music_on:
         try:
-            sound_to_play = getattr(sounds, name_param, None)
+            sound_to_play = getattr(sounds, sound_name, None)
             if sound_to_play:
                 sound_to_play.play()
-        except Exception as e:
-            print(f"Erro ao tocar som {name_param}: {e}")
 
+        except Exception as e:
+            print(f"Erro ao tocar som {sound_name}: {e}")
 
 def stop_background_music():
     try:
         music.stop()
     except Exception as e:
         print(f"Erro ao parar música: {e}")
-
 
 def play_background_music():
     global music_on
@@ -227,10 +226,9 @@ def play_background_music():
             music.play("background_loop")
             music.set_volume(0.3)
         except Exception as e:
-            print(f"Erro ao tocar música: {e}. Verifique se 'music/background_loop.ogg' ou '.wav' existe.")
+            print(f"Erro ao tocar música de fundo: {e}. Verifique 'music/background_loop.ogg' ou '.wav'.")
     else:
         stop_background_music()
-
 
 def toggle_music():
     global music_on
@@ -239,7 +237,6 @@ def toggle_music():
         play_background_music()
     else:
         stop_background_music()
-
 
 def setup_game():
     global hero, enemies, crystal, score, game_state
@@ -270,12 +267,13 @@ def setup_game():
     game_state = 'playing'
     play_background_music()
 
-
 def draw_text(text, pos, size=30, color_key='text', center=False):
-    args = {'fontsize': size, 'color': COLORS[color_key], 'fontname': "dejavusans"}
-    args['center' if center else 'topleft'] = pos
-    screen.draw.text(text, **args)
-
+    text_args = {'color': COLORS[color_key], 'fontsize': size}
+    if center:
+        text_args['center'] = pos
+    else:
+        text_args['topleft'] = pos
+    screen.draw.text(text, **text_args)
 
 def draw_menu():
     screen.fill(COLORS['bg'])
@@ -290,7 +288,6 @@ def draw_menu():
         screen.draw.filled_rect(r, COLORS[color_key])
         draw_text(t, r.center, center=True, size=24)
 
-
 def draw_game():
     screen.fill(COLORS['bg'])
 
@@ -303,12 +300,10 @@ def draw_game():
 
     draw_text(f"Cristais: {score}", (10, 10), size=30, color_key='score_text')
 
-
 def draw_end_screen(message, title_color_key, bg_color_key):
     screen.fill(COLORS[bg_color_key])
     draw_text(message, (c_x, HEIGHT // 3), size=80, color_key=title_color_key, center=True)
-    draw_text("Pressione ESPAÇO para voltar ao Menu", (c_x, HEIGHT * 2 / 3), center=True)
-
+    draw_text("Pressione ESPAÇO para voltar ao Menu", (c_x, HEIGHT * 2 / 3), size=26, center=True)
 
 def draw():
     if game_state == 'menu':
@@ -317,7 +312,6 @@ def draw():
         draw_game()
     elif game_state == 'game_over':
         draw_end_screen("GAME OVER", 'over_text', 'over')
-
 
 def update(dt):
     global game_state, score, hero, enemies, crystal
@@ -351,25 +345,22 @@ def update(dt):
             game_state = 'menu'
             hero, enemies, crystal, score = None, [], None, 0
 
-
-def on_mouse_move(pos_param):
+def on_mouse_move(pos):
     global mouse_pos
-    mouse_pos = pos_param
+    mouse_pos = pos
 
-
-def on_mouse_down(pos_param, button_param):
+def on_mouse_down(pos, button):
     global game_state
-    if game_state == 'menu' and button_param == mouse.LEFT:
-        if start_btn.collidepoint(pos_param):
+    if game_state == 'menu' and button == mouse.LEFT:
+        if start_btn.collidepoint(pos):
             play_sound('button_click')
             setup_game()
-        elif music_btn.collidepoint(pos_param):
+        elif music_btn.collidepoint(pos):
             play_sound('button_click')
             toggle_music()
-        elif exit_btn.collidepoint(pos_param):
+        elif exit_btn.collidepoint(pos):
             play_sound('button_click')
             sys.exit()
-
 
 try:
     pgzrun.go()
@@ -381,4 +372,7 @@ except Exception as e:
     if "Resource not found" in str(e) or "No such file or directory" in str(e):
         print("-> Isso pode ser um arquivo de imagem ou som faltando, ou a pasta não existe.")
         print("-> Certifique-se que 'images/default_image.png' existe.")
+    elif "on_mouse_move() hook accepts no parameter" in str(e) or "on_mouse_down() hook accepts no parameter" in str(e):
+        print(
+            "-> Verifique os nomes dos parâmetros nas funções on_mouse_move (deve ser 'pos') e on_mouse_down (deve ser 'pos', 'button').")
     input("Pressione Enter para sair.")
