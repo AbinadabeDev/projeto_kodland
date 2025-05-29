@@ -40,6 +40,7 @@ hero = None
 enemies = []
 crystal = None
 score = 0
+menu_music_started = False
 
 btn_w, btn_h, btn_s = 200, 50, 20
 c_x = WIDTH // 2
@@ -314,9 +315,19 @@ def draw():
         draw_end_screen("GAME OVER", 'over_text', 'over')
 
 def update(dt):
-    global game_state, score, hero, enemies, crystal
+    global game_state, score, hero, enemies, crystal, menu_music_started
 
-    if game_state == 'playing':
+    if game_state == 'menu':
+        if not menu_music_started and music_on:
+            play_background_music()
+            menu_music_started = True
+
+        elif not music_on and menu_music_started:
+            stop_background_music()
+            menu_music_started = False
+
+    elif game_state == 'playing':
+        menu_music_started = False
         if hero:
             hero.update(dt)
 
@@ -327,21 +338,21 @@ def update(dt):
             e.update(dt)
 
         if hero and crystal:
-            if hero and crystal:
-                if hero.actor._rect.colliderect(crystal.actor._rect):  # ALTERADO AQUI
-                    score += 1
-                    play_sound('collect')
-                    crystal.respawn()
+            if hero.actor._rect.colliderect(crystal.actor._rect):
+                score += 1
+                play_sound('collect')
+                crystal.respawn()
 
-            if hero:
-                for guard in enemies:
-                    if hero.actor._rect.colliderect(guard.actor._rect):  # ALTERADO AQUI
-                        play_sound('game_over_sfx')
-                        stop_background_music()
-                        game_state = 'game_over'
-                        break
+        if hero:
+            for guard in enemies:
+                if hero.actor._rect.colliderect(guard.actor._rect):
+                    play_sound('game_over_sfx')
+                    stop_background_music()
+                    game_state = 'game_over'
+                    break
 
     elif game_state == 'game_over':
+        menu_music_started = False
         if keyboard.space:
             game_state = 'menu'
             hero, enemies, crystal, score = None, [], None, 0
